@@ -1,79 +1,48 @@
 pipeline {
-    agent any
-    environment {
-        //be sure to replace "bhavukm" with your own Docker Hub username
-        DOCKER_IMAGE_NAME = "bhavukm/train-schedule"
+    agent {
+        label 'agent01'
     }
+    environment { 
+           DOCKER_IMAGE_NAME = "srinivassayyapureddy/train-schedule"
+           DOCKERHUB_CREDENTIALS = credentials('396dbd1d-1585-49f6-98a0-eb46dda83897')
+    }  
     stages {
+        stage('Clone MS-Repo') {
+            steps {
+                script 
+                {
+checkout([$class: 'GitSCM', branches: [[name: 'master']],  userRemoteConfigs: [[url: 'https://github.com/srinivassayyapureddy/cicd-pipeline-train-schedule-autodeploy.git']]] 
+}
+            }				
+        }
         stage('Build') {
-            steps {
-                echo 'Running build automation'
-                sh './gradlew build --no-daemon'
-                archiveArtifacts artifacts: 'dist/trainSchedule.zip'
-            }
-        }
-        stage('Build Docker Image') {
-            when {
-                branch 'master'
-            }
-            steps {
+            steps { 
                 script {
-                    app = docker.build(DOCKER_IMAGE_NAME)
-                    app.inside {
-                        sh 'echo Hello, World!'
-                    }
-                }
+	sh '''
+	echo 'Gradle Build Started'
+	./gradlew build --no-daemo
+		'''
+                }   
             }
         }
-        stage('Push Docker Image') {
-            when {
-                branch 'master'
-            }
-            steps {
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
-                        app.push("${env.BUILD_NUMBER}")
-                        app.push("latest")
-                    }
-                }
+        stage('Containerize') {
+            steps{
+sh '''
+echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+docker build -t $DOCKER_IMAGE_NAME cicd-pipeline-train-schedule-autodeploy/Dockerfile .
+            docker push $DOCKER_IMAGE_NAME
+             '''
             }
         }
-        stage('CanaryDeploy') {
-            when {
-                branch 'master'
-            }
-            environment { 
-                CANARY_REPLICAS = 1
-            }
-            steps {
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )
-            }
-        }
-        stage('DeployToProduction') {
-            when {
-                branch 'master'
-            }
-            environment { 
-                CANARY_REPLICAS = 0
-            }
-            steps {
-                input 'Deploy to Production?'
-                milestone(1)
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube.yml',
-                    enableConfigSubstitution: true
-                )
-            }
+        stage ('K8S Deploy'){
+            steps{
+sh ''' 
+kubectl get pods
+kubectl apply -f .cicd-pipeline-train-schedule-autodeploy/train-schedule-kube.yml
+                  '''
+
+            } 
         }
     }
 }
+
