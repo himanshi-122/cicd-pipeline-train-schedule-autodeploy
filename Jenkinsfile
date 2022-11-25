@@ -3,7 +3,7 @@ pipeline {
         label 'agent01'
     }
     environment { 
-           DOCKER_IMAGE_NAME = "srinivassayyapureddy/train-schedule"
+           DOCKER_IMAGE_NAME = "himanshi/train-schedule"
            DOCKERHUB_CREDENTIALS = credentials('396dbd1d-1585-49f6-98a0-eb46dda83897')
     }  
     stages {
@@ -11,7 +11,7 @@ pipeline {
             steps {
                 script 
                 {
-checkout([$class: 'GitSCM', branches: [[name: 'master']],  userRemoteConfigs: [[url: 'https://github.com/srinivassayyapureddy/cicd-pipeline-train-schedule-autodeploy.git']]] 
+checkout([$class: 'GitSCM', branches: [[name: 'master']],  userRemoteConfigs: [[url: 'https://github.com/himanshi-122/cicd-pipeline-train-schedule-autodeploy.git']]] 
 }
             }				
         }
