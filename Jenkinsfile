@@ -34,7 +34,7 @@ pipeline {
                 
                 sh '''
                   
-                 echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                 echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
                  docker build -t $DOCKER_IMAGE_NAME cicd-pipeline-train-schedule-autodeploy/Dockerfile .
                  docker push $DOCKER_IMAGE_NAME:latest
                  docker rmi $DOCKER_IMAGE_NAME:latest
