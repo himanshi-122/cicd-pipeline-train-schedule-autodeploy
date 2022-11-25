@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'agent01'
+        label 'slave1'
     }
     environment { 
            DOCKER_IMAGE_NAME = "himanshi-122/train-schedule"
