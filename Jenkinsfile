@@ -11,35 +11,35 @@ pipeline {
             steps {
                 script 
                 {
-checkout([$class: 'GitSCM', branches: [[name: 'master']],  userRemoteConfigs: [[url: 'https://github.com/himanshi-122/cicd-pipeline-train-schedule-autodeploy.git']]] 
-}
+		checkout([$class: 'GitSCM', branches: [[name: 'master']],  userRemoteConfigs: [[url: 'https://github.com/himanshi-122/cicd-pipeline-train-schedule-autodeploy.git']]] 
+		}
             }				
         }
         stage('Build') {
-            steps { 
-                script {
-	sh '''
-	echo 'Gradle Build Started'
-	./gradlew build --no-daemo
-		'''
-                }   
-            }
+            steps{ 
+                  script {
+			sh '''
+			echo 'Gradle Build Started'
+			./gradlew build --no-daemo
+				'''
+			}   
+            	  }
         }
         stage('Containerize') {
             steps{
-sh '''
-echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
-docker build -t $DOCKER_IMAGE_NAME cicd-pipeline-train-schedule-autodeploy/Dockerfile .
-            docker push $DOCKER_IMAGE_NAME
-             '''
-            }
+		sh '''
+		echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+		docker build -t $DOCKER_IMAGE_NAME cicd-pipeline-train-schedule-autodeploy/Dockerfile .
+			    docker push $DOCKER_IMAGE_NAME
+			     '''
+            	}
         }
         stage ('K8S Deploy'){
             steps{
-sh ''' 
-kubectl get pods
-kubectl apply -f .cicd-pipeline-train-schedule-autodeploy/train-schedule-kube.yml
-                  '''
+		sh ''' 
+		kubectl get pods
+		kubectl apply -f .cicd-pipeline-train-schedule-autodeploy/train-schedule-kube.yml
+				  '''
 
             } 
         }
